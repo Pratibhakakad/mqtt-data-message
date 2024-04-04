@@ -1,7 +1,13 @@
+import pika
 import paho.mqtt.client as mqtt
 import pymongo
 import logging
 from datetime import datetime
+
+# RabbitMQ configuration
+RABBITMQ_HOST = 'localhost'
+RABBITMQ_PORT = 5672
+RABBITMQ_QUEUE = 'mqtt_messages'
 
 # MQTT configuration
 MQTT_BROKER_HOST = 'mqtt.eclipse.org'
@@ -35,7 +41,7 @@ def on_message(client, userdata, message):
         message_document = {
             "topic": message.topic,
             "payload": message_payload,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime()
         }
         
         # Insert the processed message into MongoDB
@@ -61,3 +67,17 @@ mqtt_client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
 
 # Start MQTT client loop
 mqtt_client.loop_forever()
+
+# Callback for RabbitMQ message received
+def rabbitmq_callback(ch, method, properties, body):
+    print("Received message from RabbitMQ:", body.decode())
+
+# Setup RabbitMQ connection
+rabbitmq_connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, RABBITMQ_PORT))
+channel = rabbitmq_connection.channel()
+channel.queue_declare(queue=RABBITMQ_QUEUE)
+channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=rabbitmq_callback, auto_ack=True)
+
+# Start consuming RabbitMQ messages
+print("Waiting for messages from RabbitMQ...")
+channel.start_consuming()

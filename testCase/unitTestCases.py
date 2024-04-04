@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from mymodule import on_message  # Assuming your message processing function is in 'mymodule'
+from msgservice import on_message  # Assuming your message processing function is in 'mymodule'
 
 class TestMessageProcessing(unittest.TestCase):
     def test_on_message_valid_payload(self):
